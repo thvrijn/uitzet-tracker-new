@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ChevronLeft, LayoutGrid, List, PanelLeft, Plus, Search, X } from 'lucide-vue-next';
 import AppSidebar from './components/Layout/AppSidebar.vue';
@@ -28,6 +28,11 @@ const setView = (newView: 'grid' | 'list') => {
 // When the sidebar covers the content (iPhone, or a narrow iPad/Mac window), picking a filter reveals the list
 const closeSidebarIfOverlay = () => {
     if (platform.value === 'phone' || !isWide()) sidebarVisible.value = false;
+};
+
+const handleBack = () => {
+    if (platform.value === 'phone') search.value = '';
+    sidebarVisible.value = !sidebarVisible.value;
 };
 
 const filtered = computed(() => {
@@ -62,12 +67,67 @@ const handleScroll = (event: Event) => {
     largeTitleHidden.value = (event.target as HTMLElement).scrollTop > 40;
 };
 
+// On mobile the title is centred against the viewport, unless that would make it
+// overlap either toolbar button. In that case it uses the available space instead.
+const toolbar = ref<HTMLElement | null>(null);
+const toolbarBackButton = ref<HTMLElement | null>(null);
+const toolbarHeading = ref<HTMLElement | null>(null);
+const toolbarTitle = ref<HTMLElement | null>(null);
+const toolbarLayoutGroup = ref<HTMLElement | null>(null);
+const toolbarTitleMode = ref<'centered' | 'compact'>('centered');
+const toolbarTitleMaxWidth = ref(0);
+const toolbarTitleLeft = ref(0);
+const toolbarTitleAvailableWidth = ref(0);
+let toolbarResizeObserver: ResizeObserver | null = null;
+
+const measureToolbarTitle = () => {
+    if (platform.value !== 'phone' || !toolbar.value || !toolbarBackButton.value || !toolbarTitle.value || !toolbarLayoutGroup.value) {
+        toolbarTitleMode.value = 'centered';
+        toolbarTitleMaxWidth.value = 0;
+        toolbarTitleLeft.value = 0;
+        toolbarTitleAvailableWidth.value = 0;
+        return;
+    }
+
+    const toolbarBounds = toolbar.value.getBoundingClientRect();
+    const backBounds = toolbarBackButton.value.getBoundingClientRect();
+    const layoutBounds = toolbarLayoutGroup.value.getBoundingClientRect();
+    const viewportCenter = toolbarBounds.left + toolbarBounds.width / 2;
+    const gap = 12;
+    toolbarTitleLeft.value = backBounds.right - toolbarBounds.left + gap;
+    const toolbarTitleRight = toolbarBounds.right - layoutBounds.left + gap;
+    toolbarTitleAvailableWidth.value = Math.max(0, toolbarBounds.width - toolbarTitleLeft.value - toolbarTitleRight);
+    const centredMaxWidth = Math.max(
+        0,
+        2 * Math.min(viewportCenter - backBounds.right - gap, layoutBounds.left - viewportCenter - gap),
+    );
+
+    toolbarTitleMaxWidth.value = centredMaxWidth;
+    toolbarTitleMode.value = toolbarTitle.value.scrollWidth <= centredMaxWidth ? 'centered' : 'compact';
+};
+
+const measureToolbarTitleAfterLayout = () => {
+    nextTick(() => requestAnimationFrame(measureToolbarTitle));
+};
+
 onMounted(() => {
     fetchItems();
     window.addEventListener('keydown', focusSearchOnCommandF);
+    window.addEventListener('resize', measureToolbarTitle);
+    toolbarResizeObserver = new ResizeObserver(measureToolbarTitle);
+    [toolbar.value, toolbarBackButton.value, toolbarTitle.value, toolbarLayoutGroup.value]
+        .filter((element): element is HTMLElement => element !== null)
+        .forEach(element => toolbarResizeObserver?.observe(element));
+    measureToolbarTitleAfterLayout();
 });
 
-onUnmounted(() => window.removeEventListener('keydown', focusSearchOnCommandF));
+watch([title, platform], measureToolbarTitleAfterLayout);
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', focusSearchOnCommandF);
+    window.removeEventListener('resize', measureToolbarTitle);
+    toolbarResizeObserver?.disconnect();
+});
 </script>
 
 <template>
@@ -78,22 +138,31 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearchOnCommandF));
         <div class="app__scrim" @click="sidebarVisible = false" />
 
         <main class="content" @scroll.passive="handleScroll">
-            <header :class="['toolbar', { 'toolbar--scrolled': largeTitleHidden }]">
+            <header ref="toolbar" :class="['toolbar', { 'toolbar--scrolled': largeTitleHidden }]">
                 <button
+                    ref="toolbarBackButton"
                     class="glass-button glass-button--round"
                     :aria-label="platform === 'phone' ? 'Terug' : 'Zijbalk'"
-                    @click="sidebarVisible = !sidebarVisible"
+                    @click="handleBack"
                 >
                     <ChevronLeft v-if="platform === 'phone'" :size="26" :stroke-width="2.25" />
                     <PanelLeft v-else :size="platform === 'mac' ? 16 : 20" :stroke-width="2" />
                 </button>
 
-                <div class="toolbar__heading">
-                    <span class="toolbar__title">{{ title }}</span>
+                <div
+                    ref="toolbarHeading"
+                    :class="['toolbar__heading', `toolbar__heading--${toolbarTitleMode}`]"
+                    :style="{
+                        '--toolbar-title-max-width': `${toolbarTitleMaxWidth}px`,
+                        '--toolbar-title-left': `${toolbarTitleLeft}px`,
+                        '--toolbar-title-available-width': `${toolbarTitleAvailableWidth}px`,
+                    }"
+                >
+                    <span ref="toolbarTitle" class="toolbar__title">{{ title }}</span>
                     <span class="toolbar__subtitle">{{ itemCountLabel }} · {{ formatPrice(totalPrice, 0) }} uitgegeven</span>
                 </div>
 
-                <div class="glass-group">
+                <div ref="toolbarLayoutGroup" class="glass-group">
                     <button
                         :class="['glass-group__button', { 'glass-group__button--active': view === 'grid' }]"
                         aria-label="Raster"
@@ -366,6 +435,43 @@ $wide: 900px;
 
     @include phone {
         padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
+
+        .toolbar__heading {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 8px);
+            height: 44px;
+            justify-content: center;
+            min-width: 0;
+            z-index: 1;
+
+            &--centered {
+                left: 50%;
+                width: var(--toolbar-title-max-width);
+                transform: translate(-50%, 6px);
+                text-align: center;
+            }
+
+            &--compact {
+                left: var(--toolbar-title-left);
+                width: var(--toolbar-title-available-width);
+                transform: translateY(6px);
+                align-items: flex-start;
+                text-align: left;
+            }
+        }
+
+        &--scrolled {
+            .toolbar__heading { opacity: 1; }
+            .toolbar__heading--centered { transform: translate(-50%, 0); }
+            .toolbar__heading--compact { transform: translateY(0); }
+        }
+
+        .toolbar__title {
+            display: block;
+            width: 100%;
+        }
+
+        .glass-group { margin-left: auto; }
 
         .toolbar__actions {
             position: fixed;
