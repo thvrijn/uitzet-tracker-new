@@ -1,8 +1,10 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // PORT komt uit .env (gitignored), zodat de poort alleen lokaal geldt
+  server: { port: Number(loadEnv(mode, process.cwd(), '').PORT) || undefined },
   plugins: [
     vue(),
     VitePWA({
@@ -27,4 +29,4 @@ export default defineConfig({
       }
     })
   ]
-})
+}))

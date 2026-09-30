@@ -13,7 +13,9 @@ create table if not exists items (
     amount      integer     not null default 1,
     image       text        not null default '',
     url         text        not null default '',
-    order_date  date
+    order_date  date,
+    storage_location text   not null default '',
+    created_at  timestamptz not null default now()
 );
 
 -- ── Default categories ──────────────────────────────────────────────────

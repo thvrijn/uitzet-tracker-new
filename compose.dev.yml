@@ -1,0 +1,13 @@
+# Development: docker compose -f compose.dev.yml up --build
+name: uitzet-tracker-dev
+
+services:
+  uitzet-tracker-dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "${PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
