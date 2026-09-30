@@ -24,7 +24,7 @@ const setView = (newView: 'grid' | 'list') => {
     view.value = newView;
     localStorage.setItem('view', newView);
 };
-
+//test
 // When the sidebar covers the content (iPhone, or a narrow iPad/Mac window), picking a filter reveals the list
 const closeSidebarIfOverlay = () => {
     if (platform.value === 'phone' || !isWide()) sidebarVisible.value = false;
