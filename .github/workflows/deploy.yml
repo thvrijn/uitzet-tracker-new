@@ -18,7 +18,12 @@ jobs:
     runs-on: [self-hosted, linux, ARM64]
     steps:
       - name: Update checkout and rebuild container
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           cd /opt/docker/apps/uitzet-tracker-new
-          git pull --ff-only origin master
+          git pull --ff-only https://github.com/${GITHUB_REPOSITORY}.git master
           docker compose up -d --build
