@@ -1,8 +1,20 @@
 # Productie (Raspberry Pi): docker compose up -d --build
 services:
   uitzet-tracker:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-}
     container_name: uitzet-tracker
     restart: unless-stopped
-    ports:
-      - "${PORT:-8080}:80"
+    expose:
+      - "80"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: proxy
