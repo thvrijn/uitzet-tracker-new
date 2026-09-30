@@ -1,4 +1,8 @@
-// Platform-specific overrides, driven by `html[data-platform]` (see composables/usePlatform.ts)
-@mixin mac { [data-platform='mac'] & { @content; } }
-@mixin ipad { [data-platform='ipad'] & { @content; } }
-@mixin phone { [data-platform='phone'] & { @content; } }
+// Look per screen width: phone < 700px ≤ ipad < 1200px ≤ mac (keep in sync with composables/usePlatform.ts)
+$phone-max: 699px;
+$mac-min: 1200px;
+
+// `:root &` keeps the specificity the old `html[data-platform]` selector gave these overrides
+@mixin phone { @media screen and (max-width: $phone-max) { :root & { @content; } } }
+@mixin ipad { @media screen and (min-width: $phone-max + 1) and (max-width: $mac-min - 1) { :root & { @content; } } }
+@mixin mac { @media screen and (min-width: $mac-min) { :root & { @content; } } }

@@ -19,7 +19,7 @@ A Vue 3 + TypeScript PWA (Vite) for tracking household items for a "uitzet". No 
 
 - `src/supabase.ts`: Supabase client and `uploadImage` (the `item-images` bucket)
 - `src/composables/useItems.ts`: types, constants (statuses, categories) and all data access
-- `src/composables/usePlatform.ts`: detects mac/ipad/phone and sets `html[data-platform]`. Styling per platform lives in `src/assets/_platform.scss`, and `?platform=` forces a platform.
+- `src/assets/_platform.scss`: the `phone` / `ipad` / `mac` mixins are `@media screen` width queries (phone < 700px ≤ ipad < 1200px ≤ mac), not OS checks. `src/composables/usePlatform.ts` mirrors the same breakpoints for the few places the template needs them; keep both in sync.
 - `src/router/index.ts`: the routes open "sheets" (modals in `src/views/sheets/`) on top of the main list in `App.vue`. Uses history mode, so `nginx.conf` falls back to `index.html`.
 - `supabase/schema.sql`, `supabase/rls.sql`: database setup. There is no auth, so RLS is fully open to the anon role.
 

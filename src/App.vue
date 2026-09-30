@@ -231,10 +231,6 @@ $wide: 900px;
         }
 
         &.app--sidebar-visible .app__sidebar { margin-left: 0; }
-
-        @media (max-width: ($wide - 1)) {
-            .app__sidebar { margin-left: 0; }
-        }
     }
 
     // iOS: navigation stack. The sidebar is the root screen, the item list is pushed on top.

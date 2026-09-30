@@ -34,18 +34,20 @@
 }
 
 // macOS 26: white window content, subtler fills, barely dimmed sheets
-[data-platform='mac'] {
-    --background: #ffffff;
-    --background-elevated: rgba(0, 0, 0, 0.035);
-    --control-active: #ffffff;
-    --separator: rgba(0, 0, 0, 0.1);
-    --fill: rgba(0, 0, 0, 0.05);
-    --fill-strong: rgba(0, 0, 0, 0.09);
-    --label-secondary: rgba(0, 0, 0, 0.5);
-    --label-tertiary: rgba(0, 0, 0, 0.25);
-    --glass-background: rgba(246, 246, 246, 0.7);
-    --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
-    --scrim: rgba(0, 0, 0, 0.08);
+@media screen and (min-width: $mac-min) {
+    :root {
+        --background: #ffffff;
+        --background-elevated: rgba(0, 0, 0, 0.035);
+        --control-active: #ffffff;
+        --separator: rgba(0, 0, 0, 0.1);
+        --fill: rgba(0, 0, 0, 0.05);
+        --fill-strong: rgba(0, 0, 0, 0.09);
+        --label-secondary: rgba(0, 0, 0, 0.5);
+        --label-tertiary: rgba(0, 0, 0, 0.25);
+        --glass-background: rgba(246, 246, 246, 0.7);
+        --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+        --scrim: rgba(0, 0, 0, 0.08);
+    }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -74,18 +76,20 @@
         --scrim: rgba(0, 0, 0, 0.5);
     }
 
-    [data-platform='mac'] {
-        --background: #1e1e1e;
-        --background-elevated: rgba(255, 255, 255, 0.05);
-        --control-active: rgba(255, 255, 255, 0.22);
-        --separator: rgba(255, 255, 255, 0.1);
-        --fill: rgba(255, 255, 255, 0.07);
-        --fill-strong: rgba(255, 255, 255, 0.12);
-        --label-secondary: rgba(255, 255, 255, 0.55);
-        --label-tertiary: rgba(255, 255, 255, 0.25);
-        --glass-background: rgba(40, 40, 40, 0.7);
-        --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
-        --scrim: rgba(0, 0, 0, 0.25);
+    @media screen and (min-width: $mac-min) {
+        :root {
+            --background: #1e1e1e;
+            --background-elevated: rgba(255, 255, 255, 0.05);
+            --control-active: rgba(255, 255, 255, 0.22);
+            --separator: rgba(255, 255, 255, 0.1);
+            --fill: rgba(255, 255, 255, 0.07);
+            --fill-strong: rgba(255, 255, 255, 0.12);
+            --label-secondary: rgba(255, 255, 255, 0.55);
+            --label-tertiary: rgba(255, 255, 255, 0.25);
+            --glass-background: rgba(40, 40, 40, 0.7);
+            --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+            --scrim: rgba(0, 0, 0, 0.25);
+        }
     }
 }
 
@@ -113,9 +117,11 @@ body {
     overscroll-behavior: none;
 }
 
-[data-platform='mac'] body {
-    font-size: 13px;
-    letter-spacing: 0;
+body {
+    @include mac {
+        font-size: 13px;
+        letter-spacing: 0;
+    }
 }
 
 button {
@@ -413,8 +419,10 @@ select {
 }
 
 // macOS sheets drop down from the toolbar instead of rising up
-[data-platform='mac'] .modal-enter-from .modal-panel,
-[data-platform='mac'] .modal-leave-to .modal-panel { transform: translateY(-16px) scale(0.98); }
+.modal-enter-from .modal-panel,
+.modal-leave-to .modal-panel {
+    @include mac { transform: translateY(-16px) scale(0.98); }
+}
 
 @media (prefers-reduced-motion: reduce) {
     *,
