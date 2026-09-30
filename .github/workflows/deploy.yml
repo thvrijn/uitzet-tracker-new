@@ -1,0 +1,24 @@
+name: Deploy Tracker
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: tracker-production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy on Raspberry Pi
+    runs-on: [self-hosted, linux, ARM64]
+    steps:
+      - name: Update checkout and rebuild container
+        run: |
+          cd /opt/docker/apps/uitzet-tracker-new
+          git pull --ff-only origin master
+          docker compose up -d --build
