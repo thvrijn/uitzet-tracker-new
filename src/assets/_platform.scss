@@ -1,0 +1,4 @@
+// Platform-specific overrides, driven by `html[data-platform]` (see composables/usePlatform.ts)
+@mixin mac { [data-platform='mac'] & { @content; } }
+@mixin ipad { [data-platform='ipad'] & { @content; } }
+@mixin phone { [data-platform='phone'] & { @content; } }

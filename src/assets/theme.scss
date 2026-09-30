@@ -1,0 +1,426 @@
+@use 'platform' as *;
+
+// ── Apple system colors (iOS / iPadOS 26) ──────────────────────────────
+:root {
+    --tint: #007aff;
+    --red: #ff3b30;
+    --green: #34c759;
+    --orange: #ff9500;
+    --pink: #ff2d55;
+    --indigo: #5856d6;
+    --gray: #8e8e93;
+
+    --background: #f2f2f7;
+    --background-elevated: #ffffff;
+    --control-active: #ffffff;
+    --label: #000000;
+    --label-secondary: rgba(60, 60, 67, 0.6);
+    --label-tertiary: rgba(60, 60, 67, 0.3);
+    --separator: rgba(60, 60, 67, 0.18);
+    --fill: rgba(120, 120, 128, 0.12);
+    --fill-strong: rgba(120, 120, 128, 0.2);
+
+    --glass-background: rgba(255, 255, 255, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-highlight: rgba(255, 255, 255, 0.9);
+    --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05);
+    --scrim: rgba(0, 0, 0, 0.22);
+
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', system-ui, 'Helvetica Neue', sans-serif;
+    --font-rounded: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+
+    color-scheme: light dark;
+}
+
+// macOS 26: white window content, subtler fills, barely dimmed sheets
+[data-platform='mac'] {
+    --background: #ffffff;
+    --background-elevated: rgba(0, 0, 0, 0.035);
+    --control-active: #ffffff;
+    --separator: rgba(0, 0, 0, 0.1);
+    --fill: rgba(0, 0, 0, 0.05);
+    --fill-strong: rgba(0, 0, 0, 0.09);
+    --label-secondary: rgba(0, 0, 0, 0.5);
+    --label-tertiary: rgba(0, 0, 0, 0.25);
+    --glass-background: rgba(246, 246, 246, 0.7);
+    --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+    --scrim: rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tint: #0a84ff;
+        --red: #ff453a;
+        --green: #30d158;
+        --orange: #ff9f0a;
+        --pink: #ff375f;
+        --indigo: #5e5ce6;
+
+        --background: #000000;
+        --background-elevated: #1c1c1e;
+        --control-active: #636366;
+        --label: #ffffff;
+        --label-secondary: rgba(235, 235, 245, 0.6);
+        --label-tertiary: rgba(235, 235, 245, 0.3);
+        --separator: rgba(84, 84, 88, 0.6);
+        --fill: rgba(118, 118, 128, 0.24);
+        --fill-strong: rgba(118, 118, 128, 0.36);
+
+        --glass-background: rgba(44, 44, 46, 0.55);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-highlight: rgba(255, 255, 255, 0.14);
+        --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+        --scrim: rgba(0, 0, 0, 0.5);
+    }
+
+    [data-platform='mac'] {
+        --background: #1e1e1e;
+        --background-elevated: rgba(255, 255, 255, 0.05);
+        --control-active: rgba(255, 255, 255, 0.22);
+        --separator: rgba(255, 255, 255, 0.1);
+        --fill: rgba(255, 255, 255, 0.07);
+        --fill-strong: rgba(255, 255, 255, 0.12);
+        --label-secondary: rgba(255, 255, 255, 0.55);
+        --label-tertiary: rgba(255, 255, 255, 0.25);
+        --glass-background: rgba(40, 40, 40, 0.7);
+        --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+        --scrim: rgba(0, 0, 0, 0.25);
+    }
+}
+
+.status--gewenst { --status-color: var(--pink); }
+.status--besteld { --status-color: var(--orange); }
+.status--ontvangen { --status-color: var(--green); }
+.status--Alle { --status-color: var(--indigo); }
+
+// ── Base ───────────────────────────────────────────────────────────────
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    background: var(--background);
+    color: var(--label);
+    font-family: var(--font);
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+}
+
+[data-platform='mac'] body {
+    font-size: 13px;
+    letter-spacing: 0;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+
+    // Mac apps use the arrow cursor on controls
+    @include mac { cursor: default; }
+}
+
+input,
+select {
+    font: inherit;
+    color: inherit;
+}
+
+// ── Liquid Glass ───────────────────────────────────────────────────────
+.glass {
+    background: var(--glass-background);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 0.5px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+}
+
+.glass-button {
+    @extend .glass;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 22px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--label);
+    transition: transform 0.3s var(--ease-spring), opacity 0.2s;
+
+    &:active { transform: scale(0.9); }
+
+    &:disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    &--round { padding: 0; }
+
+    &--prominent {
+        background: var(--tint);
+        border-color: transparent;
+        color: #ffffff;
+        box-shadow: 0 6px 20px color-mix(in srgb, var(--tint) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    @include mac {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 16px;
+        font-size: 13px;
+
+        &:active {
+            transform: none;
+            filter: brightness(0.92);
+        }
+
+        &--round { padding: 0; }
+
+        &--prominent { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    }
+}
+
+// Sheet actions: icon-only circles on iOS/iPadOS, labelled push buttons on macOS
+.sheet-button {
+    &__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    @include mac {
+        min-width: 76px;
+        height: 28px;
+        padding: 0 14px;
+        border-radius: 14px;
+
+        .sheet-button__icon { display: none; }
+
+        .sheet-button__label {
+            position: static;
+            width: auto;
+            height: auto;
+            clip-path: none;
+        }
+    }
+}
+
+// Capsule that groups several glass buttons, like an iOS 26 toolbar group
+.glass-group {
+    @extend .glass;
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 4px;
+    border-radius: 22px;
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 36px;
+        border-radius: 18px;
+        color: var(--label);
+        transition: background 0.2s, transform 0.3s var(--ease-spring);
+
+        &:active { transform: scale(0.88); }
+
+        &--active {
+            background: var(--fill-strong);
+            color: var(--tint);
+        }
+    }
+
+    @include mac {
+        height: 32px;
+        padding: 0 3px;
+        border-radius: 16px;
+
+        .glass-group__button {
+            width: 32px;
+            height: 26px;
+            border-radius: 13px;
+
+            &:active { transform: none; }
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    }
+}
+
+// ── Inset grouped list (Settings on iOS, System Settings forms on macOS) ─
+.grouped-list {
+    margin: 0 0 28px;
+    background: var(--background-elevated);
+    border-radius: 26px;
+    overflow: hidden;
+
+    &__row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 52px;
+        padding: 10px 20px;
+        text-align: left;
+        text-decoration: none;
+        color: inherit;
+
+        & + &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 0;
+            border-top: 0.5px solid var(--separator);
+        }
+
+        &--button:active { background: var(--fill); }
+
+        &--destructive {
+            justify-content: center;
+            color: var(--red);
+        }
+
+        &--tint { color: var(--tint); }
+    }
+
+    &__label { flex: 1; }
+
+    &__value {
+        color: var(--label-secondary);
+        text-align: right;
+    }
+
+    &__input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 17px;
+        padding: 0;
+
+        &::placeholder { color: var(--label-tertiary); }
+
+        &--trailing {
+            text-align: right;
+            color: var(--label-secondary);
+        }
+    }
+
+    @include mac {
+        margin-bottom: 16px;
+        border-radius: 12px;
+        border: 0.5px solid var(--separator);
+
+        .grouped-list__row {
+            gap: 10px;
+            min-height: 36px;
+            padding: 6px 12px;
+
+            &::before { left: 12px; }
+        }
+
+        .grouped-list__input { font-size: 13px; }
+    }
+}
+
+// ── Segmented control ──────────────────────────────────────────────────
+.segmented-control {
+    display: flex;
+    padding: 3px;
+    margin: 0 0 28px;
+    border-radius: 100px;
+    background: var(--fill);
+
+    &__segment {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 36px;
+        border-radius: 100px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--label);
+        transition: background 0.25s, box-shadow 0.25s;
+
+        &--active {
+            background: var(--control-active);
+            color: var(--status-color, var(--label));
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
+        }
+    }
+
+    @include mac {
+        margin-bottom: 16px;
+        padding: 2px;
+
+        .segmented-control__segment {
+            height: 24px;
+            font-size: 13px;
+
+            svg {
+                width: 13px;
+                height: 13px;
+            }
+        }
+    }
+}
+
+// ── Modal transitions (sheets + alerts) ────────────────────────────────
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.4s var(--ease-spring);
+
+    .modal-panel { transition: transform 0.45s var(--ease-spring), opacity 0.3s; }
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+
+    .modal-panel {
+        transform: translateY(60px) scale(0.96);
+        opacity: 0;
+    }
+}
+
+// macOS sheets drop down from the toolbar instead of rising up
+[data-platform='mac'] .modal-enter-from .modal-panel,
+[data-platform='mac'] .modal-leave-to .modal-panel { transform: translateY(-16px) scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+    }
+}
