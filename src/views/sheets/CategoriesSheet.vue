@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router';
 import { Check, Minus, Plus } from 'lucide-vue-next';
 import { useItems, categoryIcon } from '../../composables/useItems';
 import SheetModal from '../../components/UI/SheetModal.vue';
-import { platform } from '../../composables/usePlatform';
 
 const router = useRouter();
 const { items, categories, addCategory, saveCategory, deleteCategory } = useItems();
@@ -64,7 +63,7 @@ const handleAdd = async () => {
                 <input v-model="newCategoryName" class="grouped-list__input" placeholder="Nieuwe categorie" enterkeyhint="done" />
             </form>
         </div>
-        <p class="categories__footer">{{ platform === 'mac' ? 'Klik' : 'Tik' }} op een naam om die te wijzigen.</p>
+        <p class="categories__footer">Tik op een naam om die te wijzigen.</p>
     </SheetModal>
 </template>
 

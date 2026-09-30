@@ -15,7 +15,11 @@ const isWide = () => window.matchMedia('(min-width: 900px)').matches;
 
 const search = ref('');
 const searchInput = ref<HTMLInputElement | null>(null);
+const searchVisible = ref(false);
 const view = ref<'grid' | 'list'>((localStorage.getItem('view') as 'grid' | 'list') || 'grid');
+const layoutMenuVisible = ref(false);
+const layoutMenu = ref<HTMLElement | null>(null);
+const layoutMenuButton = ref<HTMLButtonElement | null>(null);
 
 // On iPhone the sidebar is the navigation root, so it starts visible there
 const sidebarVisible = ref(platform.value === 'phone' || isWide());
@@ -23,6 +27,37 @@ const sidebarVisible = ref(platform.value === 'phone' || isWide());
 const setView = (newView: 'grid' | 'list') => {
     view.value = newView;
     localStorage.setItem('view', newView);
+    layoutMenuVisible.value = false;
+};
+
+const openSearch = () => {
+    layoutMenuVisible.value = false;
+    searchVisible.value = true;
+    nextTick(() => searchInput.value?.focus());
+};
+
+const closeSearch = () => {
+    search.value = '';
+    searchVisible.value = false;
+};
+
+const toggleLayoutMenu = () => {
+    layoutMenuVisible.value = !layoutMenuVisible.value;
+};
+
+const handleDocumentPointerDown = (event: PointerEvent) => {
+    if (!layoutMenuVisible.value || !layoutMenu.value || !layoutMenuButton.value) return;
+    const target = event.target as Node;
+    if (!layoutMenu.value.contains(target) && !layoutMenuButton.value.contains(target)) {
+        layoutMenuVisible.value = false;
+    }
+};
+
+const handleDocumentKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+        layoutMenuVisible.value = false;
+        if (searchVisible.value) closeSearch();
+    }
 };
 //test
 // When the sidebar covers the content (iPhone, or a narrow iPad/Mac window), picking a filter reveals the list
@@ -57,7 +92,7 @@ const itemCountLabel = computed(() => `${filtered.value.length} ${filtered.value
 const focusSearchOnCommandF = (event: KeyboardEvent) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
         event.preventDefault();
-        searchInput.value?.focus();
+        openSearch();
     }
 };
 
@@ -113,6 +148,8 @@ const measureToolbarTitleAfterLayout = () => {
 onMounted(() => {
     fetchItems();
     window.addEventListener('keydown', focusSearchOnCommandF);
+    document.addEventListener('keydown', handleDocumentKeydown);
+    document.addEventListener('pointerdown', handleDocumentPointerDown);
     window.addEventListener('resize', measureToolbarTitle);
     toolbarResizeObserver = new ResizeObserver(measureToolbarTitle);
     [toolbar.value, toolbarBackButton.value, toolbarTitle.value, toolbarLayoutGroup.value]
@@ -125,6 +162,8 @@ watch([title, platform], measureToolbarTitleAfterLayout);
 
 onUnmounted(() => {
     window.removeEventListener('keydown', focusSearchOnCommandF);
+    document.removeEventListener('keydown', handleDocumentKeydown);
+    document.removeEventListener('pointerdown', handleDocumentPointerDown);
     window.removeEventListener('resize', measureToolbarTitle);
     toolbarResizeObserver?.disconnect();
 });
@@ -146,7 +185,7 @@ onUnmounted(() => {
                     @click="handleBack"
                 >
                     <ChevronLeft v-if="platform === 'phone'" :size="26" :stroke-width="2.25" />
-                    <PanelLeft v-else :size="platform === 'mac' ? 16 : 20" :stroke-width="2" />
+                    <PanelLeft v-else :size="20" :stroke-width="2" />
                 </button>
 
                 <div
@@ -162,43 +201,51 @@ onUnmounted(() => {
                     <span class="toolbar__subtitle">{{ itemCountLabel }} · {{ formatPrice(totalPrice, 0) }} uitgegeven</span>
                 </div>
 
-                <div ref="toolbarLayoutGroup" class="glass-group">
-                    <button
-                        :class="['glass-group__button', { 'glass-group__button--active': view === 'grid' }]"
-                        aria-label="Raster"
-                        @click="setView('grid')"
-                    >
-                        <LayoutGrid :size="19" :stroke-width="2" />
+                <div class="toolbar__actions">
+                    <button class="glass-button glass-button--round" aria-label="Zoeken" :aria-pressed="searchVisible" @click="openSearch">
+                        <Search :size="20" :stroke-width="2" />
                     </button>
-                    <button
-                        :class="['glass-group__button', { 'glass-group__button--active': view === 'list' }]"
-                        aria-label="Lijst"
-                        @click="setView('list')"
-                    >
-                        <List :size="19" :stroke-width="2" />
+                    <div ref="toolbarLayoutGroup" class="toolbar__layout">
+                        <button
+                            ref="layoutMenuButton"
+                            class="glass-button glass-button--round"
+                            aria-label="Layout kiezen"
+                            :aria-expanded="layoutMenuVisible"
+                            aria-haspopup="menu"
+                            @click="toggleLayoutMenu"
+                        >
+                            <LayoutGrid :size="20" :stroke-width="2" />
+                        </button>
+                        <div v-if="layoutMenuVisible" ref="layoutMenu" class="layout-menu glass" role="menu" aria-label="Layout kiezen">
+                            <button :class="['layout-menu__item', { 'layout-menu__item--active': view === 'grid' }]" role="menuitemradio" :aria-checked="view === 'grid'" @click="setView('grid')">
+                                <LayoutGrid :size="18" :stroke-width="2" />
+                                <span>Raster</span>
+                            </button>
+                            <button :class="['layout-menu__item', { 'layout-menu__item--active': view === 'list' }]" role="menuitemradio" :aria-checked="view === 'list'" @click="setView('list')">
+                                <List :size="18" :stroke-width="2" />
+                                <span>Lijst</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="glass-button glass-button--round glass-button--prominent" aria-label="Item toevoegen" @click="router.push('/item/add')">
+                        <Plus :size="22" :stroke-width="2.25" />
                     </button>
                 </div>
 
-                <!-- Toolbar on Mac/iPad; floating bottom bar on iPhone (iOS 26) -->
-                <div class="toolbar__actions">
-                    <label class="search-field glass">
-                        <Search :size="16" :stroke-width="2" class="search-field__icon" />
-                        <input
-                            ref="searchInput"
-                            v-model="search"
-                            class="search-field__input"
-                            type="search"
-                            placeholder="Zoek"
-                            enterkeyhint="search"
-                        />
-                        <button v-if="search" class="search-field__clear" aria-label="Wis" @click="search = ''">
-                            <X :size="10" :stroke-width="3" />
-                        </button>
-                    </label>
-                    <button class="glass-button glass-button--round glass-button--prominent" aria-label="Item toevoegen" @click="router.push('/item/add')">
-                        <Plus :size="platform === 'mac' ? 18 : 22" :stroke-width="2.25" />
+                <label v-if="searchVisible" class="search-field search-field--floating glass">
+                    <Search :size="16" :stroke-width="2" class="search-field__icon" />
+                    <input
+                        ref="searchInput"
+                        v-model="search"
+                        class="search-field__input"
+                        type="search"
+                        placeholder="Zoek"
+                        enterkeyhint="search"
+                    />
+                    <button class="search-field__clear" aria-label="Zoeken sluiten en wissen" @click="closeSearch">
+                        <X :size="10" :stroke-width="3" />
                     </button>
-                </div>
+                </label>
             </header>
 
             <div class="content__inner">
@@ -430,7 +477,12 @@ $wide: 900px;
 
     &__actions {
         display: flex;
+        align-items: center;
         gap: 10px;
+    }
+
+    &__layout {
+        position: relative;
     }
 
     @include phone {
@@ -471,21 +523,11 @@ $wide: 900px;
             width: 100%;
         }
 
-        .glass-group { margin-left: auto; }
-
         .toolbar__actions {
-            position: fixed;
-            left: 16px;
-            right: 16px;
-            bottom: calc(env(safe-area-inset-bottom) + 10px);
-            z-index: 30;
-
-            .search-field {
-                flex: 1;
-                width: auto;
-                height: 48px;
-                border-radius: 24px;
-            }
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            margin-left: auto;
 
             .glass-button {
                 width: 48px;
@@ -523,6 +565,43 @@ $wide: 900px;
     }
 }
 
+.layout-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+    padding: 5px;
+    border-radius: 16px;
+}
+
+.layout-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 11px;
+    text-align: left;
+    color: var(--label);
+
+    &:hover,
+    &:focus-visible { background: var(--fill); }
+
+    &--active {
+        color: var(--tint);
+        background: var(--fill-strong);
+    }
+
+    @include mac {
+        min-height: 30px;
+        font-size: 13px;
+    }
+}
+
 .search-field {
     display: flex;
     align-items: center;
@@ -533,6 +612,17 @@ $wide: 900px;
     border-radius: 22px;
     color: var(--label-secondary);
     cursor: text;
+
+    &--floating {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: calc(env(safe-area-inset-bottom) + 10px);
+        z-index: 30;
+        width: auto;
+        height: 48px;
+        border-radius: 24px;
+    }
 
     &__icon { flex-shrink: 0; }
 
