@@ -37,6 +37,10 @@ const selectCategory = (category: string) => {
 
 <template>
     <nav class="sidebar glass">
+        <button class="sidebar__add glass-button glass-button--round glass-button--prominent" aria-label="Item toevoegen" @click="router.push('/item/add')">
+            <Plus :size="22" :stroke-width="2.25" />
+        </button>
+
         <h1 class="sidebar__title">Uitzet</h1>
 
         <div class="sidebar__tiles">
@@ -79,11 +83,6 @@ const selectCategory = (category: string) => {
                 <ChevronRight :size="18" :stroke-width="2" class="sidebar-row__chevron" />
             </button>
         </div>
-
-        <button class="sidebar__add" @click="router.push('/item/add')">
-            <span class="sidebar__add-icon"><Plus :size="16" :stroke-width="3" /></span>
-            Nieuw item
-        </button>
     </nav>
 </template>
 
@@ -146,7 +145,7 @@ const selectCategory = (category: string) => {
         -webkit-backdrop-filter: none;
 
         .sidebar__title {
-            margin: 24px 4px 16px;
+            margin: 4px 4px 16px;
             font-size: 34px;
             letter-spacing: -0.025em;
         }
@@ -160,26 +159,11 @@ const selectCategory = (category: string) => {
             overflow: hidden;
         }
 
+        // Top right, like the + in the Reminders nav bar
         .sidebar__add {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: auto;
-            padding: 20px 4px 0;
-            font-size: 17px;
-            font-weight: 600;
-            color: var(--tint);
-        }
-
-        .sidebar__add-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--tint);
-            color: #ffffff;
+            display: inline-flex;
+            flex-shrink: 0;
+            align-self: flex-end;
         }
     }
 
